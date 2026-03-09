@@ -1,0 +1,383 @@
+= TP Étude de Cas : WebCaisse
+:toc:
+
+== Mission 1
+
+=== Question 1.1 — Proposition de structure de base de données (PlantUML)
+
+[source,plantuml]
+----
+@startuml
+class Client {
+  id : int
+  raisonSociale : String
+  rue : String
+  codePostal : String
+  ville : String
+  telephone : String
+  email : String
+  motDePasseHash : String
+}
+
+class PointDeVente {
+  id : int
+  nom : String
+  adresse : String
+  idClient : int
+}
+
+class Formule {
+  id : int
+  libelle : String
+  prix : decimal
+  nbVendeursSimultanes : int
+}
+
+class ProgrammeFidelite {
+  id : int
+  libelle : String
+}
+
+class SouscriptionPointVente {
+  id : int
+  dateDebut : date
+  dateFin : date
+  idPointDeVente : int
+  idFormule : int
+  idProgrammeFidelite : int
+}
+
+class Langue {
+  id : int
+  libelle : String
+}
+
+class ActiverLangue {
+  idPointDeVente : int
+  idLangue : int
+}
+
+Client "1" -- "0..*" PointDeVente
+PointDeVente "1" -- "0..*" SouscriptionPointVente
+Formule "1" -- "0..*" SouscriptionPointVente
+ProgrammeFidelite "1" -- "0..*" SouscriptionPointVente
+PointDeVente "1" -- "0..*" ActiverLangue
+Langue "1" -- "0..*" ActiverLangue
+@enduml
+----
+
+=== Question 1.2 — Pourquoi l’envoi du mot de passe par mail est une faille critique + processus sécurisé
+
+Envoyer un mot de passe par mail est une faille critique car le mail peut être intercepté, piraté ou lu par une personne non autorisée.
+
+Cela menace :
+
+* la *confidentialité* : le mot de passe est exposé ;
+* l’*intégrité* : un tiers peut se connecter et modifier les données ;
+* la *disponibilité* : le vrai client peut perdre l’accès à son compte ;
+* la *preuve* : on ne peut pas garantir que seul le bon utilisateur a reçu et utilisé le mot de passe.
+
+Au niveau du *RGPD*, ce n’est pas conforme car un mot de passe est une donnée sensible d’authentification. Il ne doit pas être transmis en clair.
+
+==== Processus sécurisé proposé
+
+. Le client remplit le formulaire d’inscription.
+. Le système enregistre le compte avec un mot de passe *haché*.
+. Le système envoie un mail contenant un *lien d’activation temporaire* avec un jeton unique.
+. Le client clique sur le lien.
+. Il choisit lui-même son mot de passe.
+. Le mot de passe est haché avant stockage.
+. Le jeton expire après un délai court et ne peut être utilisé qu’une seule fois.
+
+=== Question 1.3 — Pourquoi la table proposée ne permet pas l’historique
+
+Table proposée : `FormuleSouscrite(idPointDeVente, idFormule)`
+
+Cette structure ne permet pas l’historique car elle ne contient aucune date.
+
+On ne sait donc pas :
+
+* quand une formule a commencé ;
+* quand elle s’est terminée ;
+* combien de temps elle a été active ;
+* combien de changements ont eu lieu dans le mois.
+
+Donc on ne peut pas faire une facturation mensuelle correcte.
+
+=== Question 1.4 — Correction de la structure
+
+Proposition de table :
+
+`FormuleSouscrite`
+
+* `idSouscription`
+* `idPointDeVente`
+* `idFormule`
+* `dateDebut`
+* `dateFin`
+
+Clé primaire : `idSouscription`
+
+Clés étrangères :
+
+* `idPointDeVente`
+* `idFormule`
+
+Cette structure permet de garder toutes les périodes d’activation de chaque formule.
+
+=== Question 1.5 — Trigger SQL `tg_audit_changement_formule`
+
+Exemple avec une table d’audit :
+
+[source,sql]
+----
+CREATE TABLE AuditChangementFormule (
+    idAudit INT AUTO_INCREMENT PRIMARY KEY,
+    idPointDeVente INT NOT NULL,
+    ancienneFormule INT NOT NULL,
+    nouvelleFormule INT NOT NULL,
+    dateChangement DATETIME NOT NULL
+);
+----
+
+Trigger :
+
+[source,sql]
+----
+DELIMITER $$
+
+CREATE TRIGGER tg_audit_changement_formule
+AFTER UPDATE ON FormuleSouscrite
+FOR EACH ROW
+BEGIN
+    IF OLD.idFormule <> NEW.idFormule THEN
+        INSERT INTO AuditChangementFormule
+        (idPointDeVente, ancienneFormule, nouvelleFormule, dateChangement)
+        VALUES
+        (OLD.idPointDeVente, OLD.idFormule, NEW.idFormule, NOW());
+    END IF;
+END$$
+
+DELIMITER ;
+----
+
+== Mission 2
+
+=== Question 2.1 — Requêtes SQL
+
+==== a) Liste des consommateurs ayant eu au moins une vente en 2017
+
+[source,sql]
+----
+SELECT DISTINCT c.nom, c.prenom, c.mail
+FROM Conso c
+JOIN Vente v ON v.idConso = c.id
+WHERE YEAR(v.dateVente) = 2017;
+----
+
+==== b) Nombre de consommateurs fidélisés entre 18 et 30 ans
+
+[source,sql]
+----
+SELECT COUNT(*) AS nbConso
+FROM ConsoFidele
+WHERE TIMESTAMPDIFF(YEAR, dateNaiss, CURDATE()) BETWEEN 18 AND 30;
+----
+
+==== c) Liste des consommateurs avec le montant total des ventes
+
+[source,sql]
+----
+SELECT c.nom, c.prenom, SUM(v.montantVente) AS totalVentes
+FROM Conso c
+JOIN Vente v ON v.idConso = c.id
+GROUP BY c.id, c.nom, c.prenom;
+----
+
+=== Question 2.2 — Faille de sécurité majeure
+
+La faille est une *injection SQL*.
+
+Comme `seuilVentes` vient directement de la saisie utilisateur et est concaténé dans la requête, un attaquant peut modifier la requête SQL.
+
+C’est une faille OWASP majeure.
+
+=== Question 2.3 — Requête SQL + code Java sécurisé avec `PreparedStatement`
+
+==== Requête SQL
+
+[source,sql]
+----
+SELECT c.nom, c.prenom, c.tel, c.mail
+FROM Conso c
+JOIN Vente v ON v.idConso = c.id
+WHERE c.id NOT IN (SELECT id FROM ConsoFidele)
+AND v.dateVente BETWEEN ? AND ?
+GROUP BY c.id, c.nom, c.prenom, c.tel, c.mail
+HAVING COUNT(v.id) > ?;
+----
+
+==== Code Java
+
+[source,java]
+----
+public static ArrayList<Conso> listeConsoAFideliser(int seuilVentes, Date dateDeb, Date dateFin) throws SQLException {
+    ArrayList<Conso> lesConsos = new ArrayList<>();
+
+    Connection dbConnect = DriverManager.getConnection("jdbc:mysql:" + dbURL, adminUser, adminPwd);
+
+    String requete = "SELECT c.nom, c.prenom, c.tel, c.mail " +
+                     "FROM Conso c " +
+                     "JOIN Vente v ON v.idConso = c.id " +
+                     "WHERE c.id NOT IN (SELECT id FROM ConsoFidele) " +
+                     "AND v.dateVente BETWEEN ? AND ? " +
+                     "GROUP BY c.id, c.nom, c.prenom, c.tel, c.mail " +
+                     "HAVING COUNT(v.id) > ?";
+
+    PreparedStatement pstmt = dbConnect.prepareStatement(requete);
+    pstmt.setDate(1, new java.sql.Date(dateDeb.getTime()));
+    pstmt.setDate(2, new java.sql.Date(dateFin.getTime()));
+    pstmt.setInt(3, seuilVentes);
+
+    ResultSet res = pstmt.executeQuery();
+
+    while (res.next()) {
+        Conso leConso = new Conso(
+            res.getString("nom"),
+            res.getString("prenom"),
+            res.getString("mail"),
+            res.getString("tel")
+        );
+        lesConsos.add(leConso);
+    }
+
+    res.close();
+    pstmt.close();
+    dbConnect.close();
+
+    return lesConsos;
+}
+----
+
+=== Question 2.4 — Compléter `testInitConso`
+
+[source,java]
+----
+public void testInitConso()  {
+    ConsoFidele consoTest = new ConsoFidele("Lifo", "Paul",
+        " lifo.paul@gmail.com ", "0600000000",
+        new SimpleDateFormat("yyyy-MM-dd").parse("1961-01-03"),
+        new SimpleDateFormat("yyyy-MM-dd").parse("2017-01-05"));
+
+    assertEquals("erreur initialisation points fidélité", 0, consoTest.getPointsFidelite());
+}
+----
+
+=== Question 2.5 — Compléter `testAddMontant`
+
+[source,java]
+----
+public void testAddMontant()  {
+    ConsoFidele consoTest = new ConsoFidele("Lifo", "Paul",
+        " lifo.paul@gmail.com ", "0600000000",
+        new SimpleDateFormat("yyyy-MM-dd").parse("1961-01-03"),
+        new SimpleDateFormat("yyyy-MM-dd").parse("2017-01-05"));
+
+    consoTest.addFidelite(3, 150);
+    assertEquals("erreur tranche 100-200", 10, consoTest.getPointsFidelite());
+
+    consoTest.addFidelite(3, 300);
+    assertEquals("erreur tranche 201-500", 30, consoTest.getPointsFidelite());
+
+    consoTest.addFidelite(3, 600);
+    assertEquals("erreur tranche >500", 80, consoTest.getPointsFidelite());
+}
+----
+
+== Mission 3
+
+=== Question 3.1 — Javadoc de `statVente`
+
+[source,java]
+----
+/**
+ * Calcule le pourcentage de ventes réalisées par des consommateurs fidèles
+ * parmi la liste des ventes passée en paramètre.
+ *
+ * @param lesVentesDuJour la liste des ventes à analyser
+ * @return le pourcentage de ventes effectuées par des consommateurs fidèles
+ */
+----
+
+=== Question 3.2 — Méthode `getNbVentes`
+
+[source,java]
+----
+public int getNbVentes() {
+    return lesVentes.size();
+}
+----
+
+=== Question 3.3 — Constructeur de `VenteEcommerce`
+
+[source,java]
+----
+public VenteEcommerce(Date uneDateVente, Conso unConso, double unMontant,
+                      String adresseLivraison, String optionLivraison) {
+    super(uneDateVente, unConso, unMontant);
+    this.adresseLivraison = adresseLivraison;
+    this.optionLivraison = optionLivraison;
+}
+----
+
+=== Question 3.4 — Compléter `compareLieuVente`
+
+[source,java]
+----
+public static double compareLieuVente(ArrayList<ConsoFidele> lesConsos)  {
+    double totalEcom = 0;
+    double totalMag = 0;
+
+    for (ConsoFidele cf : lesConsos) {
+        for (Vente uneVente : cf.getVentes()) {
+            if (uneVente instanceof VenteEcommerce) {
+                totalEcom += uneVente.getMontantVente();
+            } else if (uneVente instanceof VenteMagasin) {
+                totalMag += uneVente.getMontantVente();
+            }
+        }
+    }
+    return totalMag / totalEcom;
+}
+----
+
+=== Question 3.5 — Pourquoi `return totalMag/totalEcom;` est dangereux + correction
+
+C’est dangereux car si `totalEcom` vaut `0`, on fait une division par zéro.
+
+Correction :
+
+[source,java]
+----
+if (totalEcom == 0) {
+    return 0;
+}
+return totalMag / totalEcom;
+----
+
+=== Question 3.6 — Méthode dans `Conso` pour retourner les ventes supérieures à un montant donné
+
+[source,java]
+----
+public ArrayList<Vente> getVentesSuperieuresA(double montantMin) {
+    ArrayList<Vente> resultat = new ArrayList<Vente>();
+
+    for (Vente uneVente : lesVentes) {
+        if (uneVente.getMontantVente() > montantMin) {
+            resultat.add(uneVente);
+        }
+    }
+
+    return resultat;
+}
+----
