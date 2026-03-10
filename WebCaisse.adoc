@@ -3,7 +3,7 @@
 
 == Mission 1
 
-=== Question 1.1 — Proposition de structure de base de données (PlantUML)
+=== Question 1.1 — Proposition de structure de base de données (nous utiliseerons PlantUML pour ce cas précis)
 
 [source,plantuml]
 ----
@@ -68,21 +68,21 @@ Langue "1" -- "0..*" ActiverLangue
 
 === Question 1.2 — Pourquoi l’envoi du mot de passe par mail est une faille critique + processus sécurisé
 
-Envoyer un mot de passe par mail est une faille critique car le mail peut être intercepté, piraté ou lu par une personne non autorisée.
+Envoyer un mot de passe par mail est bien évidemment une faille critique car le mail peut être intercepté, piraté ou lu par une personne non autorisée.
 
-Cela menace :
+Cela menace plusieurs élements du dicp :
 
 * la *confidentialité* : le mot de passe est exposé ;
 * l’*intégrité* : un tiers peut se connecter et modifier les données ;
 * la *disponibilité* : le vrai client peut perdre l’accès à son compte ;
 * la *preuve* : on ne peut pas garantir que seul le bon utilisateur a reçu et utilisé le mot de passe.
 
-Au niveau du *RGPD*, ce n’est pas conforme car un mot de passe est une donnée sensible d’authentification. Il ne doit pas être transmis en clair.
+Au niveau du *RGPD*, ce n’est pas conforme car un mot de passe est une donnée sensible d’authentification. Il ne doit pas être transmis en clair, or dans le cas présent, il l'est.
 
 ==== Processus sécurisé proposé
 
 . Le client remplit le formulaire d’inscription.
-. Le système enregistre le compte avec un mot de passe *haché*.
+. Le système enregistre le compte avec un mot de passe *haché* (très important).
 . Le système envoie un mail contenant un *lien d’activation temporaire* avec un jeton unique.
 . Le client clique sur le lien.
 . Il choisit lui-même son mot de passe.
@@ -91,7 +91,7 @@ Au niveau du *RGPD*, ce n’est pas conforme car un mot de passe est une donnée
 
 === Question 1.3 — Pourquoi la table proposée ne permet pas l’historique
 
-Table proposée : `FormuleSouscrite(idPointDeVente, idFormule)`
+tout d'abord, vérifions la table proposée : `FormuleSouscrite(idPointDeVente, idFormule)`
 
 Cette structure ne permet pas l’historique car elle ne contient aucune date.
 
@@ -106,7 +106,7 @@ Donc on ne peut pas faire une facturation mensuelle correcte.
 
 === Question 1.4 — Correction de la structure
 
-Proposition de table :
+voici donc la table que je propose :
 
 `FormuleSouscrite`
 
@@ -123,11 +123,11 @@ Clés étrangères :
 * `idPointDeVente`
 * `idFormule`
 
-Cette structure permet de garder toutes les périodes d’activation de chaque formule.
+Cette structure nous permet ainsi de garder toutes les périodes d’activation de chaque formule.
 
 === Question 1.5 — Trigger SQL `tg_audit_changement_formule`
 
-Exemple avec une table d’audit :
+prenons d'abord l'exemple de la table d’audit ci dessous :
 
 [source,sql]
 ----
@@ -139,6 +139,8 @@ CREATE TABLE AuditChangementFormule (
     dateChangement DATETIME NOT NULL
 );
 ----
+
+maintenant, nous pouvons nous attaquer au vif du sujet :
 
 Trigger :
 
@@ -196,11 +198,11 @@ GROUP BY c.id, c.nom, c.prenom;
 
 === Question 2.2 — Faille de sécurité majeure
 
-La faille est une *injection SQL*.
+La faille est assez importante, enfin, importante dans l'ancien temps, c'est en effet une *injection SQL*.
 
 Comme `seuilVentes` vient directement de la saisie utilisateur et est concaténé dans la requête, un attaquant peut modifier la requête SQL.
 
-C’est une faille OWASP majeure.
+C’est une faille OWASP très importante.
 
 === Question 2.3 — Requête SQL + code Java sécurisé avec `PreparedStatement`
 
@@ -301,7 +303,7 @@ public void testAddMontant()  {
 [source,java]
 ----
 /**
- * Calcule le pourcentage de ventes réalisées par des consommateurs fidèles
+ * on calcule le pourcentage de ventes réalisées par des consommateurs qui sont dit comme étant fidèles
  * parmi la liste des ventes passée en paramètre.
  *
  * @param lesVentesDuJour la liste des ventes à analyser
@@ -353,9 +355,9 @@ public static double compareLieuVente(ArrayList<ConsoFidele> lesConsos)  {
 
 === Question 3.5 — Pourquoi `return totalMag/totalEcom;` est dangereux + correction
 
-C’est dangereux car si `totalEcom` vaut `0`, on fait une division par zéro.
+C’est très dangereux car si `totalEcom` vaut `0`, alors on fera une division par zéro.
 
-Correction :
+voici la gorrection que je propose :
 
 [source,java]
 ----
