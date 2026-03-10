@@ -4,82 +4,91 @@
 
 === Question 1.1
 
-La requête montre que Coopain choisit une paillette :
+La requête montre comment Coopain choisi une paillette.
 
-* du taureau demandé ;
-* du type de paillette demandé ;
-* avec un stock restant au moins égal à 1 ;
-* en prenant le lot le plus ancien disponible, car on cherche la date minimale.
+En gros ils prennent :
+- une paillette du taureau demandé
+- du type de paillette demandé
+- avec au moins 1 en stock
 
-Donc la règle de gestion est : *pour une demande d’insémination, on prend une paillette disponible du bon taureau et du bon type, en privilégiant le lot le plus ancien encore en stock.*
+Et ensuite ils regardent la date du lot et ils prennent **le plus ancien** (date minimale).
+
+Donc la règle de gestion c’est :  
+pour une demande d’insémination, on prend une paillette dispo du bon taureau et du bon type, et on utilise d’abord le lot le plus ancien encore en stock.
 
 === Question 1.2
 
-Informations imprimées sur une paillette et données nécessaires :
+Informations qui sont imprimées sur la paillette et d’où viennent les données.
 
-==== 1. Date de collecte sous la forme AAJJJ
+==== 1. Date de collecte (format AAJJJ)
 
-* donnée source : `Collecte.date`
-* provenance : table `Collecte`
-* transformation : oui, il faut transformer la date au format `AAJJJ`
+- donnée : `Collecte.date`
+- table : `Collecte`
+- transformation : oui, il faut transformer la date au format AAJJJ
 
-==== 2. N° d’agrément du CCS
+==== 2. Numéro d’agrément du CCS
 
-* donnée source : numéro du centre de collecte
-* provenance : non présente dans le schéma fourni, probablement une donnée fixe de Coopain
-* transformation : non
+- donnée : numéro du centre de collecte
+- table : pas présente dans le schéma donné
+- transformation : non
 
-==== 3. N° national d’identification du taureau
+Donc probablement une info fixe de Coopain.
 
-* donnée source : `Taureau.idNational`
-* provenance : table `Taureau`
-* transformation : non
+==== 3. Numéro national du taureau
+
+- donnée : `Taureau.idNational`
+- table : `Taureau`
+- transformation : non
 
 ==== 4. Code-barres
 
-* données sources :
-** `Taureau.numeroIE`
-** `Collecte.date`
-** `Lot.numero`
-* provenance :
-** `Taureau`
-** `Collecte`
-** `Lot`
-* transformation : oui, car il faut construire le code-barres avec ces valeurs
+Données utilisées :
 
-==== 5. N° IE du taureau
+- `Taureau.numeroIE`
+- `Collecte.date`
+- `Lot.numero`
 
-* donnée source : `Taureau.numeroIE`
-* provenance : table `Taureau`
-* transformation : non
+Tables :
+
+- `Taureau`
+- `Collecte`
+- `Lot`
+
+Transformation : oui parce que le code-barres est construit avec ces valeurs.
+
+==== 5. Numéro IE du taureau
+
+- donnée : `Taureau.numeroIE`
+- table : `Taureau`
+- transformation : non
 
 ==== 6. Quantième date de collecte
 
-* donnée source : `Collecte.date`
-* provenance : table `Collecte`
-* transformation : oui, il faut calculer le nombre de jours écoulés depuis le 01/01/2002
+- donnée : `Collecte.date`
+- table : `Collecte`
+- transformation : oui, il faut calculer le nombre de jours depuis le 01/01/2002
 
-==== 7. Numéro de lot de prélèvement
+==== 7. Numéro de lot
 
-* donnée source : `Lot.numero`
-* provenance : table `Lot`
-* transformation : non
+- donnée : `Lot.numero`
+- table : `Lot`
+- transformation : non
 
-==== 8. Code de la race
+==== 8. Code race
 
-* donnée source : `Race.code`
-* provenance : table `Race`, via `Taureau.codeRace`
-* transformation : non
+- donnée : `Race.code`
+- table : `Race` via `Taureau.codeRace`
+- transformation : non
 
 ==== 9. Nom du taureau
 
-* donnée source : `Taureau.nom`
-* provenance : table `Taureau`
-* transformation : non, sauf mise en forme en gras à l’impression
+- donnée : `Taureau.nom`
+- table : `Taureau`
+- transformation : non (juste affiché en gras à l’impression)
 
 === Question 1.3
 
-Requête pour obtenir, pour le taureau `FR0103015562`, les tarifs des types de paillette :
+Requête pour avoir les tarifs des types de paillette pour le taureau `FR0103015562`.
 
 [source,sql]
 ----
@@ -91,7 +100,7 @@ WHERE t.idNationalTaureau = 'FR0103015562';
 
 === Question 1.4
 
-Requête pour obtenir la liste des taureaux avec le stock total restant, triée par stock croissant :
+Requête qui donne la liste des taureaux avec le stock total restant, trié du plus petit au plus grand.
 
 [source,sql]
 ----
@@ -106,99 +115,100 @@ ORDER BY stockTotalRestant ASC;
 
 Proposition de schéma relationnel pour gérer les demandes d’insémination.
 
-On garde les tables déjà existantes utiles :
+On garde les tables existantes utiles :
 
-* `Taureau`
-* `Lot`
-* `TypePaillette`
-* `Tarif`
+- `Taureau`
+- `Lot`
+- `TypePaillette`
+- `Tarif`
 
-On ajoute les nouvelles tables suivantes :
+Et on ajoute des tables.
 
 ==== Adherent
 
-* `idAdherent`
-* `nom`
-* `adresse`
-* `telephone`
-* `idSecteur`
+- idAdherent
+- nom
+- adresse
+- telephone
+- idSecteur
 
 ==== Secteur
 
-* `idSecteur`
-* `nom`
-* `description`
+- idSecteur
+- nom
+- description
 
 ==== Vache
 
-* `idNationalVache`
-* `nom`
-* `idAdherent`
+- idNationalVache
+- nom
+- idAdherent
 
 ==== Inseminateur
 
-* `idInseminateur`
-* `nom`
-* `prenom`
-* `numLicence`
-* `login`
-* `password`
-* `idSecteur`
-* `idVehicule`
+- idInseminateur
+- nom
+- prenom
+- numLicence
+- login
+- password
+- idSecteur
+- idVehicule
 
 ==== Vehicule
 
-* `idVehicule`
-* `immatriculation`
-* `marque`
-* `modele`
-* `dateAchat`
+- idVehicule
+- immatriculation
+- marque
+- modele
+- dateAchat
 
 ==== DemandeInsemination
 
-* `idDemande`
-* `dateDemande`
-* `idAdherent`
-* `idNationalVache`
-* `idNationalTaureau`
-* `idTypePaillette`
-* `idInseminateur`
-* `dateHeureInsemination`
-* `temperatureAmbiante`
-* `compteRendu`
-* `dateCollecteLot`
-* `numeroLot`
+- idDemande
+- dateDemande
+- idAdherent
+- idNationalVache
+- idNationalTaureau
+- idTypePaillette
+- idInseminateur
+- dateHeureInsemination
+- temperatureAmbiante
+- compteRendu
+- dateCollecteLot
+- numeroLot
 
-==== Relations principales
+Relations principales :
 
-* un adhérent appartient à un secteur ;
-* une vache appartient à un adhérent ;
-* un inséminateur est affecté à un secteur ;
-* un inséminateur utilise un véhicule ;
-* une demande concerne un adhérent, une vache, un taureau et un type de paillette ;
-* une demande est affectée à un inséminateur ;
-* une demande utilise un lot précis de paillette.
+- un adhérent appartient à un secteur
+- une vache appartient à un adhérent
+- un inséminateur est dans un secteur
+- un inséminateur utilise un véhicule
+- une demande concerne un adhérent, une vache, un taureau et un type de paillette
+- une demande est faite par un inséminateur
+- une demande utilise un lot précis
 
 == Mission 2 - Nouvelles fonctionnalités de l’application Android MobiSemin
 
 === Question 2.1
 
-Scénarios d’erreur possibles pour la saisie des kilomètres d’une tournée :
+Exemples d’erreurs possibles quand on saisit les kilomètres d’une tournée.
 
-* *3.a* La date saisie est supérieure à la date du jour, le système affiche un message d’erreur et retourne à l’étape 1.
-* *3.b* Le véhicule sélectionné n’existe pas ou n’est pas disponible, le système affiche un message d’erreur et retourne à l’étape 1.
-* *4.b* Le kilométrage de fin n’est pas renseigné, le système affiche un message d’erreur et retourne à l’étape 3.
-* *4.c* Le kilométrage de fin n’est pas numérique, le système affiche un message d’erreur et retourne à l’étape 3.
-* *4.d* Le kilométrage de fin est inférieur au kilométrage de début, le système affiche un message d’erreur et retourne à l’étape 3.
+- si la date est plus grande que la date du jour → message d’erreur et retour étape 1
+- si le véhicule choisi existe pas → message d’erreur et retour étape 1
+- si le kilométrage de fin est vide → message d’erreur et retour étape 3
+- si le kilométrage de fin n’est pas un nombre → message d’erreur et retour étape 3
+- si le kilométrage de fin est plus petit que le début → message d’erreur et retour étape 3
 
 === Question 2.2
 
-Compléter la méthode `onCreate()` de `MobiDb` :
+Méthode `onCreate()` de la classe `MobiDb`.
 
 [source,java]
 ----
 @Override
 public void onCreate(SQLiteDatabase db) {
+
     String strReq = "CREATE TABLE inseminateur(id INTEGER PRIMARY KEY AUTOINCREMENT, nom TEXT, prenom TEXT)";
     db.execSQL(strReq);
 
@@ -214,70 +224,64 @@ public void onCreate(SQLiteDatabase db) {
 
 === Question 2.3
 
-En cas de perte ou de vol du smartphone, il y a des risques importants pour la base SQLite locale.
+Si le téléphone est perdu ou volé, ça peut poser des problèmes avec la base SQLite.
 
-==== Confidentialité
+Confidentialité :
 
-Une personne malveillante pourrait accéder :
+Une personne peut accéder à :
+- infos sur les tournées
+- identités des inséminateurs
+- véhicules
+- activité de Coopain
 
-* aux informations sur les tournées ;
-* aux identités des inséminateurs ;
-* aux véhicules ;
-* aux données liées à l’activité de Coopain.
+Intégrité :
 
-==== Intégrité
+Quelqu’un pourrait :
+- modifier les km
+- supprimer des tournées
+- ajouter de fausses données
+- envoyer de mauvaises infos au serveur
 
-Une personne pourrait :
+Solutions possibles :
 
-* modifier des kilomètres ;
-* supprimer des tournées ;
-* ajouter de fausses données ;
-* fausser les remontées vers le serveur central.
-
-==== Solutions de protection
-
-On peut proposer :
-
-* le chiffrement des données du téléphone ;
-* un code PIN fort ou une authentification biométrique ;
-* une solution MDM pour gérer les mobiles à distance ;
-* la possibilité d’effacement à distance ;
-* ne pas stocker plus de données que nécessaire en local.
+- chiffrement du téléphone
+- code PIN ou empreinte
+- gestion des mobiles (MDM)
+- effacement à distance
+- stocker le moins de données possible en local
 
 === Question 2.4
 
-Le stockage ou la transmission du mot de passe en clair est une faille critique.
+Stocker un mot de passe en clair c’est très dangereux.
 
-Pourquoi ?
+Pourquoi :
 
-* si la base est compromise, les mots de passe sont lisibles directement ;
-* si le réseau est intercepté, le mot de passe peut être volé ;
-* un utilisateur réutilise souvent le même mot de passe ailleurs.
+- si la base est volée → les mots de passe sont lisibles
+- si quelqu’un intercepte le réseau → il peut voir le mot de passe
+- les gens réutilisent souvent leurs mots de passe
 
-Donc c’est dangereux pour la sécurité des comptes.
+Donc ça peut compromettre plusieurs comptes.
 
-==== Recommandations
+Solutions :
 
-Il faut :
-
-* ne jamais stocker le mot de passe en clair ;
-* stocker seulement un hachage du mot de passe ;
-* utiliser une connexion sécurisée en HTTPS/TLS ;
-* mettre en place une authentification sécurisée côté serveur.
+- jamais stocker le mot de passe en clair
+- stocker seulement un hash
+- utiliser HTTPS / TLS
+- authentification sécurisée côté serveur
 
 == Mission 3 - Gestion des tournées des inséminateurs
 
 === Question 3.1.1
 
-Les deux méthodes `CATournee` de la classe `GestionTournee` ont le même nom mais pas les mêmes paramètres.
+Les deux méthodes `CATournee` ont le même nom mais pas les mêmes paramètres.
 
-C’est le mécanisme de *surcharge* des méthodes.
+C’est ce qu’on appelle la **surcharge de méthode** en Java.
 
-Java les différencie grâce à la signature de la méthode, donc par la liste des paramètres.
+Java les différencie grâce aux paramètres.
 
 === Question 3.1.2
 
-Méthode `getCoordGPS()` de la classe `Adherent` :
+Méthode `getCoordGPS()` dans `Adherent`.
 
 [source,java]
 ----
@@ -288,15 +292,18 @@ public String getCoordGPS() {
 
 === Question 3.1.3
 
-Méthode `getAdherents()` de la classe `GestionTournee` :
+Méthode `getAdherents()` dans `GestionTournee`.
 
 [source,java]
 ----
 public ArrayList<Adherent> getAdherents() {
-    ArrayList<Adherent> lesAdherents = new ArrayList<Adherent>();
+
+    ArrayList<Adherent> lesAdherents = new ArrayList<>();
 
     for (Visite v : laTournee.getLesVisites()) {
+
         Adherent a = v.getLeAdherent();
+
         if (!lesAdherents.contains(a)) {
             lesAdherents.add(a);
         }
@@ -308,11 +315,12 @@ public ArrayList<Adherent> getAdherents() {
 
 === Question 3.1.4
 
-Méthode `montantAFacturer()` de la classe `Visite` :
+Méthode `montantAFacturer()` dans `Visite`.
 
 [source,java]
 ----
 public float montantAFacturer() {
+
     float total = 0;
 
     for (PrestationVisite pv : lesPrestationsVisite) {
@@ -325,7 +333,7 @@ public float montantAFacturer() {
 
 === Question 3.2
 
-Compléter les tests unitaires de `GestionTourneeTest`.
+Tests unitaires.
 
 ==== setUp()
 
@@ -333,10 +341,13 @@ Compléter les tests unitaires de `GestionTourneeTest`.
 ----
 @Before
 public void setUp() throws Exception {
+
     tp1 = new TypePrestation("Insémination", 100);
     tp2 = new TypePrestation("Echographie", 10);
+
     ins1 = new Inseminateur("Petit", "Ferdinand", "0600000100");
-    adh1 = new Adherent("Duboeuf", "Georges" , "0600000020", "48.5331", "7.72");
+
+    adh1 = new Adherent("Duboeuf", "Georges", "0600000020", "48.5331", "7.72");
     adh2 = new Adherent("Cow", "Marguerite", "0600000003", "48.5833", "7.75");
 
     t1 = new Tournee(new SimpleDateFormat("dd-MM-yyyy").parse("06-05-2020"), ins1);
@@ -357,10 +368,11 @@ public void setUp() throws Exception {
 ----
 @Test
 public void testCATournee() {
+
     assertEquals("erreur CA initial", 0.0f, gt.CATournee());
 
     gt.ajouterVisite(v1);
-    assertEquals("erreur CA après première visite", 310.0f, gt.CATournee());
+    assertEquals("erreur CA après visite 1", 310.0f, gt.CATournee());
 
     gt.ajouterVisite(v2);
     assertEquals("erreur CA final", 410.0f, gt.CATournee());
@@ -369,12 +381,11 @@ public void testCATournee() {
 
 === Question 3.3
 
-Une attaque possible est une attaque de type *Man-in-the-Middle*.
+Une attaque possible est une **attaque Man-in-the-Middle**.
 
 Un attaquant placé entre le smartphone et le serveur peut :
+- intercepter les données
+- lire les infos
+- modifier les données avant qu’elles arrivent au serveur
 
-* intercepter les données échangées ;
-* lire les informations transmises ;
-* modifier les données avant qu’elles arrivent au serveur.
-
-Pour sécuriser les échanges, il faut imposer le protocole *HTTPS* avec *TLS* côté serveur.
+Pour éviter ça, il faut sécuriser les échanges avec **HTTPS et TLS**.
