@@ -1,4 +1,6 @@
 = TP Étude de Cas : Coopain
+:toc:
+:toclevels: 3
 
 == Mission 1 - Gestion des demandes d’insémination
 
@@ -11,7 +13,7 @@ En gros ils prennent :
 - du type de paillette demandé
 - avec au moins 1 en stock
 
-Et ensuite ils regardent la date du lot et ils prennent **le plus ancien** (date minimale).
+Et ensuite ils regardent la date du lot et ils prennent *le plus ancien* (date minimale).
 
 Donc la règle de gestion c’est :  
 pour une demande d’insémination, on prend une paillette dispo du bon taureau et du bon type, et on utilise d’abord le lot le plus ancien encore en stock.
@@ -260,8 +262,6 @@ Pourquoi :
 - si quelqu’un intercepte le réseau → il peut voir le mot de passe
 - les gens réutilisent souvent leurs mots de passe
 
-Donc ça peut compromettre plusieurs comptes.
-
 Solutions :
 
 - jamais stocker le mot de passe en clair
@@ -275,13 +275,9 @@ Solutions :
 
 Les deux méthodes `CATournee` ont le même nom mais pas les mêmes paramètres.
 
-C’est ce qu’on appelle la **surcharge de méthode** en Java.
-
-Java les différencie grâce aux paramètres.
+C’est la *surcharge de méthode* en Java.
 
 === Question 3.1.2
-
-Méthode `getCoordGPS()` dans `Adherent`.
 
 [source,java]
 ----
@@ -291,8 +287,6 @@ public String getCoordGPS() {
 ----
 
 === Question 3.1.3
-
-Méthode `getAdherents()` dans `GestionTournee`.
 
 [source,java]
 ----
@@ -315,8 +309,6 @@ public ArrayList<Adherent> getAdherents() {
 
 === Question 3.1.4
 
-Méthode `montantAFacturer()` dans `Visite`.
-
 [source,java]
 ----
 public float montantAFacturer() {
@@ -335,35 +327,6 @@ public float montantAFacturer() {
 
 Tests unitaires.
 
-==== setUp()
-
-[source,java]
-----
-@Before
-public void setUp() throws Exception {
-
-    tp1 = new TypePrestation("Insémination", 100);
-    tp2 = new TypePrestation("Echographie", 10);
-
-    ins1 = new Inseminateur("Petit", "Ferdinand", "0600000100");
-
-    adh1 = new Adherent("Duboeuf", "Georges", "0600000020", "48.5331", "7.72");
-    adh2 = new Adherent("Cow", "Marguerite", "0600000003", "48.5833", "7.75");
-
-    t1 = new Tournee(new SimpleDateFormat("dd-MM-yyyy").parse("06-05-2020"), ins1);
-    gt = new GestionTournee(t1);
-
-    v1 = new Visite(adh1, "09:00");
-    v1.ajouterPrestationVisite(tp1, 3);
-    v1.ajouterPrestationVisite(tp2, 1);
-
-    v2 = new Visite(adh2, "10:30");
-    v2.ajouterPrestationVisite(tp1, 1);
-}
-----
-
-==== testCATournee()
-
 [source,java]
 ----
 @Test
@@ -381,11 +344,11 @@ public void testCATournee() {
 
 === Question 3.3
 
-Une attaque possible est une **attaque Man-in-the-Middle**.
+Une attaque possible est une *Man-in-the-Middle*.
 
-Un attaquant placé entre le smartphone et le serveur peut :
+Un attaquant entre le smartphone et le serveur peut :
 - intercepter les données
 - lire les infos
-- modifier les données avant qu’elles arrivent au serveur
+- modifier les données
 
-Pour éviter ça, il faut sécuriser les échanges avec **HTTPS et TLS**.
+Pour éviter ça on utilise **HTTPS avec TLS**.
