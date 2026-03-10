@@ -1,0 +1,70 @@
+= Question supplementaire
+
+== 1) NF525
+
+La NF525 impose que tout logiciel de caisse conserve un historique sécurisé et infalsifiable des transactions.  
+Pour WebCaisse, cela signifie que chaque vente, chaque modification de formule ou de fidélité doit être tracée, horodatée et impossible à modifier sans laisser de trace.  
+La conception fonctionnelle doit donc inclure des tables d’historique, des journaux d’audit et des mécanismes de contrôle pour garantir l’intégrité et la conformité.
+
+== messagerie
+Envoyer un mot de passe en clair par mail est une faille critique.  
+Le message peut être intercepté, lu par erreur ou utilisé par un tiers pour accéder au compte.  
+Cela compromet la confidentialité et l’intégrité des données et viole le RGPD, qui interdit la transmission de données sensibles en clair.  
+La solution sécurisée consiste à envoyer un lien d’activation temporaire, permettant au client de choisir son mot de passe lui-même, et de stocker ce mot de passe haché dans la base de données.
+
+==  FormuleSouscrite 
+La table FormuleSouscrite(idPointDeVente, idFormule) ne contient aucune information sur les dates de début et de fin de souscription.  
+Sans ces informations, il est impossible de savoir combien de temps une formule a été active pour un point de vente et donc de calculer correctement la facturation mensuelle.
+
+==  FormuleSouscrite
+Pour gérer l’historique, il faut ajouter les colonnes dateDebut et dateFin et une clé primaire unique.  
+Par exemple : FormuleSouscrite(idSouscription, idPointDeVente, idFormule, dateDebut, dateFin).  
+Cela permet de stocker chaque changement de formule avec sa période de validité et de calculer les montants à facturer.
+
+==  déclencheur
+Un trigger SQL permet d’enregistrer automatiquement tout changement de formule dans une table d’audit.  
+Chaque modification est horodatée et associée à l’ancienne et la nouvelle formule, ce qui garantit la traçabilité et la conformité avec les obligations NF525.  
+Cela facilite également le suivi des modifications par le client ou l’administration.
+
+== Différence entre WHERE et HAVING
+La clause WHERE filtre les lignes avant tout regroupement ou agrégation.  
+La clause HAVING filtre après que les lignes ont été regroupées.  
+Pour chercher les consommateurs réguliers ayant un certain nombre de ventes, on utilise HAVING COUNT(v.id) > seuil, car le seuil concerne le résultat agrégé et non les ventes individuelles.
+
+== Risque de concaténation dans une requête SQL
+Si on écrit "... HAVING COUNT(*) > " + seuilVentes et que seuilVentes vient de l’utilisateur, un attaquant peut injecter du code SQL.  
+Il pourrait modifier la requête et accéder ou supprimer des données.  
+C’est une injection SQL, une des vulnérabilités majeures listées par l’OWASP.
+
+== Avantages de PreparedStatement
+PreparedStatement sépare le code SQL des données, empêchant l’injection SQL.  
+Il gère automatiquement l’échappement des caractères et permet de réutiliser la requête avec différents paramètres sans recompilation.  
+Cela améliore à la fois la sécurité et les performances.
+
+== Utilité d’instanceof dans compareLieuVente
+instanceof permet de vérifier si un objet est une instance d’une classe particulière.  
+Dans compareLieuVente, cela permet de distinguer les ventes en magasin et les ventes e-commerce.  
+Cependant, son usage peut être critiqué car il brise le polymorphisme.  
+Une meilleure approche serait d’utiliser une méthode abstraite dans la classe Vente pour récupérer le type ou le montant selon le contexte.
+
+== Gestion de la division par zéro
+Si totalEcom est nul dans return totalMag / totalEcom, le programme lèvera une exception et plantera.  
+Il est crucial de vérifier que totalEcom n’est pas zéro avant la division.  
+On peut par exemple retourner 0 ou une valeur par défaut pour éviter une erreur à l’exécution.
+
+== Rôle des classes Launcher et Main en JavaFX
+Launcher sert souvent à contourner les limitations liées au classpath de JavaFX et à démarrer l’application correctement.  
+Main contient la méthode start() qui initialise la scène, charge les contrôles graphiques et lance l’interface.  
+Ensemble, elles assurent un démarrage propre et compatible avec les différentes versions de JavaFX.
+
+== Test unitaire – Points de fidélité
+Pour testInitConso, il faut vérifier que la création d’un consommateur fidèle initialise les points à zéro.  
+Pour testAddMontant, il faut tester le calcul des points selon le type de programme : 10 points pour 100–200€, 20 points pour 201–500€, et 50 points au-delà.  
+Ces tests garantissent que la logique de fidélisation fonctionne correctement.
+
+== Méthodes statistiques
+statVente calcule le pourcentage de ventes réalisées par des consommateurs fidèles sur la totalité des ventes d’un jour.  
+getNbVentes retourne le nombre d’objets Vente dans la collection lesVentes d’un consommateur.  
+Le constructeur de VenteEcommerce appelle le constructeur parent super(...) pour initialiser les attributs hérités et ajoute les spécificités comme l’adresse de livraison.  
+compareLieuVente compare les montants des ventes e-commerce et magasin. La division finale doit être protégée pour éviter la division par zéro.  
+Une méthode pour filtrer les ventes supérieures à un certain montant peut parcourir lesVentes et ajouter à une nouvelle liste uniquement celles qui dépassent le seuil.
