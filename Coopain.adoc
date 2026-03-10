@@ -13,7 +13,7 @@ En gros ils prennent :
 - du type de paillette demandé
 - avec au moins 1 en stock
 
-Et ensuite ils regardent la date du lot et ils prennent *le plus ancien* (date minimale).
+Et ensuite ils regardent la date du lot et ils prennent *le plus ancien* (donc, la date minimale).
 
 Donc la règle de gestion c’est :  
 pour une demande d’insémination, on prend une paillette dispo du bon taureau et du bon type, et on utilise d’abord le lot le plus ancien encore en stock.
@@ -248,15 +248,15 @@ Solutions possibles :
 
 - chiffrement du téléphone
 - code PIN ou empreinte
-- gestion des mobiles (MDM)
+- gestion des mobiles
 - effacement à distance
 - stocker le moins de données possible en local
 
 === Question 2.4
 
-Stocker un mot de passe en clair c’est très dangereux.
+Stocker un mot de passe en clair c’est bien évidemment très dangereux, après, normalement tout le monde devrait le savoir.
 
-Pourquoi :
+Pourquoi c'est dangereux ? 
 
 - si la base est volée → les mots de passe sont lisibles
 - si quelqu’un intercepte le réseau → il peut voir le mot de passe
