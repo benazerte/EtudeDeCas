@@ -1,0 +1,136 @@
+= Correction Personnalisée - TP Étude de Cas WebCaisse (Partie 1/2)
+:author: Correction pour M. Maarek
+:toc: left
+:toc-title: Sommaire
+:icons: font
+
+Bonjour M. Maarek.
+
+Le travail fourni sur cette étude de cas et sur les questions de synthèse est d'un très  niveau. Les concepts d'architecture logicielle, de sécurité et de bases de données sont maîtrisés.
+
+Cependant, il est impératif que l'ensemble de ce travail écrit fasse l'objet d'une validation orale avec M. Robert. Cette étape est strictement requise pour confirmer votre maîtrise technique et garantir que le contenu n'est pas issu d'une génération automatisée.
+
+Voici le détail factuel de la correction .
+
+
+== Mission 1 : Souscription en ligne et Sécurité
+
+=== Question 1.1 — Proposition de structure de base de données
+**Votre proposition :** Diagramme PlantUML incluant `Client`, `PointDeVente`, `Formule`, `ProgrammeFidelite`, `SouscriptionPointVente`, `Langue`, `ActiverLangue`.
+
+[WARNING]
+.Remarque - Modélisation incomplète
+====
+La syntaxe PlantUML est correcte. Cependant, il manque une notion essentielle visible dans le sujet : les **Modules**.
+Il fallait ajouter une table `Module` et une table d'association `Composer` pour lier les modules aux formules. De plus, l'activation des langues doit être rattachée au `Module` et non directement au `PointDeVente`.
+====
+
+=== Question 1.2 — Faille de l'envoi de mot de passe
+**Votre réponse :** Analyse DICP et RGPD. Proposition d'un processus avec lien d'activation temporaire et hachage.
+
+[NOTE]
+.Évaluation - Conforme
+====
+L'analyse des risques est très précise. Le processus d'authentification proposé avec un jeton (token) temporaire est la solution technique attendue dans l'industrie.
+====
+
+=== Questions 1.3 et 1.4 — Historisation des formules
+**Votre réponse :** Identification du manque de dates empêchant la facturation. Ajout de `dateDebut` et `dateFin` dans `FormuleSouscrite`.
+
+[NOTE]
+.Évaluation - Validé
+====
+Le diagnostic est exact. La structure corrigée répond au besoin de traçabilité pour la facturation au prorata.
+====
+
+=== Question 1.5 — Trigger SQL
+**Votre réponse :** Déclencheur sur `FormuleSouscrite` avec condition `IF OLD.idFormule <> NEW.idFormule`.
+
+[NOTE]
+.Évaluation - Conforme
+====
+Le code SQL est propre. La table ciblée est la bonne et l'utilisation de la condition limite efficacement les insertions inutiles dans la table d'audit.
+====
+
+== Mission 2 : Exploitation des données et Sécurité
+
+=== Question 2.1 — Requêtes SQL
+**Vos requêtes :**
+
+[WARNING]
+.Remarque - Oubli dans la requête c
+====
+* **Requête a :** Correcte. L'usage de `DISTINCT` est pertinent.
+* **Requête b :** Correcte. La fonction `TIMESTAMPDIFF` est bien employée.
+* **Requête c :** Incomplète. La consigne exigeait l'affichage du courriel. L'attribut `c.mail` est manquant dans la clause `SELECT` et dans le `GROUP BY`.
+====
+
+=== Questions 2.2 et 2.3 — Faille de sécurité (OWASP) et PreparedStatement
+**Votre réponse :** Identification de l'injection SQL. Code Java sécurisé avec `PreparedStatement`.
+
+[NOTE]
+.Évaluation - Validé
+====
+La vulnérabilité est bien identifiée. L'implémentation Java est rigoureuse : la requête contient les bons filtres et la conversion des paramètres avec `setDate()` est correcte.
+====
+
+=== Questions 2.4 et 2.5 — Tests unitaires (JUnit)
+**Votre réponse :** Tests sur l'initialisation et l'ajout de points.
+
+[NOTE]
+.Évaluation - Conforme
+====
+Les règles de gestion des paliers de fidélité sont correctement testées via les assertions.
+====
+
+== Mission 3 : Statistiques de ventes (POO)
+
+=== Questions 3.1 à 3.3 — Javadoc, Méthodes et Constructeur
+**Votre réponse :** Rédaction Javadoc, utilisation de `size()` et appel à `super()`.
+
+[NOTE]
+.Évaluation - Validé
+====
+L'encapsulation et l'héritage sont correctement implémentés. Le code est fonctionnel.
+====
+
+=== Questions 3.4 et 3.5 — Polymorphisme et Robustesse
+**Votre réponse :** Séparation des montants via `instanceof` et sécurisation de la division par zéro (`if (totalEcom == 0)`).
+
+[NOTE]
+.Évaluation - Validé
+====
+L'algorithme de calcul comparatif est exact. Le risque d'exception mathématique (`ArithmeticException`) est anticipé et corrigé.
+====
+
+=== Question 3.6 — Filtrage des ventes
+**Votre réponse :** Parcours de collection, test du montant minimum et remplissage d'une nouvelle `ArrayList`.
+
+[NOTE]
+.Évaluation - Conforme
+====
+L'algorithme de filtrage est exact et respecte les standards Java.
+====
+
+---
+
+== Partie 3 : Questions de synthèse (Java, SQL et Sécurité)
+
+**Vos réponses :** Synthèse couvrant les normes NF525, les failles OWASP, la temporalité SQL, l'intérêt des Triggers, la différence WHERE/HAVING, l'usage de PreparedStatement, le contournement avec Launcher, etc.
+
+[NOTE]
+.Évaluation - Très satisfaisant
+====
+L'ensemble de vos réponses est concis et techniquement précis. Les concepts sont bien définis.
+La critique justifiée de l'opérateur `instanceof` (qui devrait idéalement être remplacé par du polymorphisme pur) démontre un bon recul sur la conception orientée objet.
+====
+
+== Conclusion
+
+Note estimée : *19 / 20*
+
+Le travail rendu est rigoureux, complet et structuré. Les implémentations en SQL et en Java sont de bonne qualité.
+
+Pour valider définitivement ces acquis et maintenir cette évaluation lors des prochains TP, vous devez :
+
+- Contacter M. Robert afin de procéder au contrôle oral obligatoire sur vos réponses à l'étude de cas et aux questions de synthèse.
